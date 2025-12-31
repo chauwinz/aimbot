@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI 3D Toggle</title>
+<style>
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{
+    margin:0;height:100vh;overflow:hidden;
+    background:#05050f;color:#e6e6ff;
+}
+/* GALAXY BG */
+#bg{position:fixed;inset:0;z-index:0}
+
+/* MENU */
+.menu{
+    position:fixed;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    width:400px;
+    background:linear-gradient(180deg,#0d1024,#070711);
+    border:1px solid #1e2455;
+    border-radius:12px;
+    box-shadow:0 0 30px rgba(120,80,255,.35);
+    z-index:2;
+    overflow:hidden;
+}
+
+/* FOV CIRCLE */
+#fovCircle{
+    position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    border:2px solid rgba(140,150,255,.9);
+    border-radius:50%;
+    box-shadow:0 0 20px rgba(120,120,255,.6);
+    pointer-events:none;
+    opacity:0;transition:.25s;
+}
+
+/* SMOOTH TEXT */
+#smoothText{
+    position:absolute;bottom:14px;left:50%;
+    transform:translateX(-50%);
+    font-size:28px;font-weight:bold;
+    background:linear-gradient(90deg,#ff4ecd,#7f7cff,#3bfffc,#7f7cff,#ff4ecd);
+    background-size:300%;
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    animation:rainbow 2s linear infinite;
+    opacity:0;pointer-events:none;
+}
+@keyframes rainbow{from{background-position:0%}to{background-position:300%}}
+
+/* HEADER */
+.header{
+    padding:10px 14px;
+    background:linear-gradient(90deg,#1a1f4a,#0b0e25);
+    border-bottom:1px solid #2b337a;
+    font-weight:bold;letter-spacing:1px;
+}
+
+/* BODY & TABS */
+.body{display:flex}
+.tabs{width:80px;background:#080a1d;border-right:1px solid #222a66;}
+.tab{height:46px;display:flex;justify-content:center;align-items:center;font-size:12px;color:#7c82c9;cursor:pointer;border-bottom:1px solid #161b44;}
+.tab.active{background:linear-gradient(90deg,#1d2360,#0e1335);color:#fff;}
+
+/* CONTENT */
+.content{flex:1;padding:8px}
+.section{display:none}
+.section.active{display:block}
+.item{padding:8px 6px;border-bottom:1px solid #1a1f4a}
+.item-row{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+
+/* 3D TOGGLE */
+.toggle3d{
+    width:50px;height:22px;
+    background:linear-gradient(145deg,#1f1f3d,#2b2b5a);
+    border-radius:4px;
+    box-shadow:3px 3px 6px rgba(0,0,0,.5),-2px -2px 5px rgba(255,255,255,.1);
+    color:#fff;
+    display:flex;justify-content:center;align-items:center;
+    font-size:11px;font-weight:bold;
+    cursor:pointer;
+    transition:.2s;
+    user-select:none;
+}
+.toggle3d.on{
+    background:linear-gradient(145deg,#6b5cff,#3b7cff);
+}
+.toggle3d.on::after{content:"ON";}
+.toggle3d:not(.on)::after{content:"OFF";}
+
+/* HEX STREAM */
+.hex{position:relative;height:14px;overflow:hidden;font-size:10px;color:#9aa0ff;opacity:.35;margin-top:2px;}
+.hex span{
+    position:absolute;left:0;white-space:nowrap;
+    animation:hexDown .6s linear infinite;
+}
+.hex span:nth-child(2){animation-delay:.2s;}
+.hex span:nth-child(3){animation-delay:.4s;}
+.hex span:nth-child(4){animation-delay:.1s;}
+@keyframes hexDown{from{top:-200%}to{top:200%}}
+
+/* SLIDER */
+.slider{margin-top:6px}
+.slider input[type=range]{
+    -webkit-appearance:none;width:100%;height:6px;border-radius:6px;
+    background:linear-gradient(90deg,#6b5cff,#3b7cff) 0/var(--p,0%) 100% no-repeat,#2a2f66;
+    outline:none;
+}
+.slider input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:14px;height:14px;border-radius:4px;background:#fff;border:2px solid #6b5cff;cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div class="menu">
+  <div id="fovCircle"></div>
+  <div id="smoothText"></div>
+  <div class="header">[ FUNCTIONS ]</div>
+
+  <div class="body">
+    <div class="tabs">
+      <div class="tab active" onclick="openTab(0)">[ AIM ]</div>
+      <div class="tab" onclick="openTab(1)">[ ESP ]</div>
+      <div class="tab" onclick="openTab(2)">[ MISC ]</div>
+    </div>
+
+    <div class="content">
+      <!-- AIM -->
+      <div class="section active">
+        <div class="item">
+          <div class="item-row">
+            <span> Aimbot</span>
+            <div class="toggle3d on" onclick="toggle3D(this)"></div>
+          </div>
+          <div class="hex">
+            <span>0xA9F12BC44E99123FA77</span>
+            <span>0x44BCFAE9912FF77AC</span>
+            <span>0xEF1299BC4477AC01</span>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="item-row">
+            <span> FOV</span><span id="fovVal">20</span>
+          </div>
+          <div class="slider">
+            <input type="range" min="20" max="200" value="20"
+                   oninput="updateFOV(this)" onmouseup="hideFOV()" ontouchend="hideFOV()">
+          </div>
+          <div class="hex">
+            <span>0x44BCFAE9912FF77AC</span>
+            <span>0xEF1299BC4477AC01</span>
+            <span>0xFA1199BCED7712</span>
+            <span>0x9912AC44EF77</span>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="item-row">
+            <span> Smooth</span><span id="smoothVal">1</span>
+          </div>
+          <div class="slider">
+            <input type="range" min="1" max="20" value="1"
+                   oninput="updateSmooth(this)" onmouseup="hideSmooth()" ontouchend="hideSmooth()">
+          </div>
+          <div class="hex">
+            <span>0xEF1299BC4477AC01</span>
+            <span>0xFA1199BCED7712</span>
+            <span>0x9912AC44EF77</span>
+            <span>0xCFA9912ABEE447</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ESP -->
+      <div class="section">
+        <div class="item">
+          <div class="item-row">
+            <span> ESP Player</span>
+            <div class="toggle3d" onclick="toggle3D(this)"></div>
+          </div>
+          <div class="hex">
+            <span>0xFA1199BCED7712</span>
+            <span>0x9912AC44EF77</span>
+            <span>0xCFA9912ABEE447</span>
+          </div>
+        </div>
+        <div class="item">
+          <div class="item-row">
+            <span> ESP Box</span>
+            <div class="toggle3d" onclick="toggle3D(this)"></div>
+          </div>
+          <div class="hex">
+            <span>0xCFA9912ABEE447</span>
+            <span>0x9912FAEE4477</span>
+            <span>0xEE4477BC1299</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MISC -->
+      <div class="section">
+        <div class="item">
+          <div class="item-row">
+            <span> FPS Boost</span>
+            <div class="toggle3d" onclick="toggle3D(this)"></div>
+          </div>
+          <div class="hex">
+            <span>0x9912FAEE4477</span>
+            <span>0xEE4477BC1299</span>
+            <span>0xA9F12BC44E99123FA77</span>
+          </div>
+        </div>
+        <div class="item">
+          <div class="item-row">
+            <span> No Recoil</span>
+            <div class="toggle3d" onclick="toggle3D(this)"></div>
+          </div>
+          <div class="hex">
+            <span>0xEE4477BC1299</span>
+            <span>0xFA1199BCED7712</span>
+            <span>0x44BCFAE9912FF77AC</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function toggle3D(el){el.classList.toggle("on");}
+
+/* Tabs */
+function openTab(i){
+  document.querySelectorAll(".tab").forEach((t,x)=>t.classList.toggle("active",x===i));
+  document.querySelectorAll(".section").forEach((s,x)=>s.classList.toggle("active",x===i));
+  document.querySelector(".header").textContent=["[ AIMBOT ]","[ ESP ]","[ MISC ]"][i];
+}
+
+/* Slider fill */
+document.querySelectorAll('input[type=range]').forEach(r=>{
+  r.addEventListener('input',()=>{
+    const p=(r.value-r.min)/(r.max-r.min)*100;
+    r.style.setProperty('--p',p+'%');
+  });
+});
+
+/* FOV */
+const fovCircle=document.getElementById("fovCircle");
+function updateFOV(el){fovVal.textContent=el.value;const size=el.value*1.2;fovCircle.style.width=size+"px";fovCircle.style.height=size+"px";fovCircle.style.opacity=1;}
+function hideFOV(){fovCircle.style.opacity=0;}
+
+/* SMOOTH */
+const smoothText=document.getElementById("smoothText");
+function updateSmooth(el){smoothVal.textContent=el.value;smoothText.textContent="[lua]: "+el.value;smoothText.style.opacity=1;}
+function hideSmooth(){smoothText.style.opacity=0;}
+
+/* Galaxy BG */
+const c=document.getElementById("bg"),ctx=c.getContext("2d");
+let w,h,stars=[];
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();onresize=resize;
+for(let i=0;i<150;i++)stars.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5,s:Math.random()*0.6+0.3});
+function draw(){ctx.clearRect(0,0,w,h);stars.forEach(s=>{s.y+=s.s;if(s.y>h)s.y=0;ctx.globalAlpha=.4;ctx.fillStyle="#8a8fff";ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();});requestAnimationFrame(draw);}
+draw();
+</script>
+
+</body>
+</html>
